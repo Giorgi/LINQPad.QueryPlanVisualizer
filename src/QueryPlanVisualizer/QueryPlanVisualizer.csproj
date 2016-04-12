@@ -31,14 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="LINQPad, Version=1.0.0.0, Culture=neutral, PublicKeyToken=21353812cd2a2db5, processorArchitecture=MSIL">
       <HintPath>..\packages\LINQPad.4.51.3\lib\net40\LINQPad.exe</HintPath>
       <Private>True</Private>
@@ -58,9 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Helpers\DatabaseHelper.cs" />
-    <Compile Include="Helpers\EntityFrameworkDatabaseHelper.cs" />
-    <Compile Include="Helpers\LinqToSqlDatabaseHelper.cs" />
+    <Compile Include="DatabaseHelperFactory.cs" />
     <Compile Include="MissingIndexDetails.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -80,7 +70,9 @@
     <Compile Include="XmlUtils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\DataSources\MissingIndexDetails.datasource" />
     <None Include="Resources\showplanxml.xsd">
       <SubType>Designer</SubType>
@@ -179,6 +171,24 @@
     <EmbeddedResource Include="Resources\images\top.gif" />
     <EmbeddedResource Include="Resources\images\udx.gif" />
     <EmbeddedResource Include="Resources\images\while.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QueryPlanVisualizerEF6Support\QueryPlanVisualizerEF6Support.csproj">
+      <Project>{c89fdba0-83bd-4502-8006-c5f61ef72fd6}</Project>
+      <Name>QueryPlanVisualizerEF6Support</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\QueryPlanVisualizerDatabaseHelpers\QueryPlanVisualizerDatabaseHelper.csproj">
+      <Project>{c164a674-3dcb-4e95-9692-e5e40a18599b}</Project>
+      <Name>QueryPlanVisualizerDatabaseHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\QueryPlanVisualizerEF5Support\QueryPlanVisualizerEF5Support.csproj">
+      <Project>{483f8ff9-0e23-4613-84e0-3cdbdcd35df1}</Project>
+      <Name>QueryPlanVisualizerEF5Support</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\QueryPlanVisualizerLinqToSqlSupport\QueryPlanVisualizerLinqToSqlSupport.csproj">
+      <Project>{47af8e15-5a04-4e1f-bef9-ff25b2758d57}</Project>
+      <Name>QueryPlanVisualizerLinqToSqlSupport</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
