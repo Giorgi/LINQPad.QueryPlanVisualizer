@@ -23,6 +23,19 @@ namespace ExecutionPlanVisualizer
             return queryable;
         }
 
+        public static void DumpPlanXml(string planXml)
+        {
+            try
+            {
+                var databaseHelper = new LinqToSqlDatabaseHelper(Util.CurrentDataContext);
+                ProcessQueryPlan<string>(planXml, databaseHelper, true);
+            }
+            catch (Exception exception)
+            {
+                ShowError(exception.ToString());
+            }
+        }
+
         private static void DumpPlanInternal<T>(IQueryable<T> queryable, bool dumpData, bool addNewPanel)
         {
             if (Util.CurrentDataContext != null && !(Util.CurrentDataContext.Connection is SqlConnection))
@@ -42,32 +55,43 @@ namespace ExecutionPlanVisualizer
             {
                 var planXml = databaseHelper.GetSqlServerQueryExecutionPlan(queryable);
 
-                if (string.IsNullOrEmpty(planXml))
+                ProcessQueryPlan(planXml, databaseHelper, addNewPanel, queryable);
+            }
+            catch (Exception exception)
+            {
+                ShowError(exception.ToString());
+            }
+        }
+
+        private static void ProcessQueryPlan<T>(string planXml, DatabaseHelper databaseHelper, bool addNewPanel, IQueryable<T> queryable = null)
+        {
+            if (string.IsNullOrEmpty(planXml))
+            {
+                ShowError("Cannot retrieve query plan");
+                return;
+            }
+
+            var queryPlanProcessor = new QueryPlanProcessor(planXml);
+
+            var indexes = queryPlanProcessor.GetMissingIndexes();
+            var planHtml = queryPlanProcessor.ConvertPlanToHtml();
+            
+            var files = ExtractFiles();
+            files.Add(planHtml);
+
+            var html = string.Format(Resources.template, files.ToArray());
+
+            var control = PanelManager.GetOutputPanel(ExecutionPlanPanelTitle)?.GetControl() as QueryPlanUserControl;
+
+            if (control == null || addNewPanel)
+            {
+                control = new QueryPlanUserControl()
                 {
-                    ShowError("Cannot retrieve query plan");
-                    return;   
-                }
+                    DatabaseHelper = databaseHelper
+                };
 
-                var queryPlanProcessor = new QueryPlanProcessor(planXml);
-
-                var indexes = queryPlanProcessor.GetMissingIndexes();
-                var planHtml = queryPlanProcessor.ConvertPlanToHtml();
-
-
-                var files = ExtractFiles();
-                files.Add(planHtml);
-
-                var html = string.Format(Resources.template, files.ToArray());
-
-                var control = PanelManager.GetOutputPanel(ExecutionPlanPanelTitle)?.GetControl() as QueryPlanUserControl;
-
-                if (control == null || addNewPanel)
+                if (queryable != null)
                 {
-                    control = new QueryPlanUserControl()
-                    {
-                        DatabaseHelper = databaseHelper
-                    };
-
                     control.IndexCreated += (sender, args) =>
                     {
                         if (MessageBox.Show("Index created. Refresh query plan?", "", MessageBoxButtons.YesNo,
@@ -76,15 +100,11 @@ namespace ExecutionPlanVisualizer
                             DumpPlanInternal(queryable, false, false);
                         }
                     };
-
-                    PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
                 }
-                control.DisplayExecutionPlanDetails(planXml, html, indexes);
+
+                PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
             }
-            catch (Exception exception)
-            {
-                ShowError(exception.ToString());
-            }
+            control.DisplayExecutionPlanDetails(planXml, html, indexes);
         }
 
         private static void ShowError(string text)
