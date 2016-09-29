@@ -28,7 +28,15 @@ namespace ExecutionPlanVisualizer
             try
             {
                 var databaseHelper = new LinqToSqlDatabaseHelper(Util.CurrentDataContext);
-                ProcessQueryPlan<string>(planXml, databaseHelper, true);
+
+                var control = new QueryPlanUserControl()
+                {
+                    DatabaseHelper = databaseHelper
+                };
+
+                PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
+
+                ProcessQueryPlan(planXml, control);
             }
             catch (Exception exception)
             {
@@ -55,7 +63,31 @@ namespace ExecutionPlanVisualizer
             {
                 var planXml = databaseHelper.GetSqlServerQueryExecutionPlan(queryable);
 
-                ProcessQueryPlan(planXml, databaseHelper, addNewPanel, queryable);
+                var control = PanelManager.GetOutputPanel(ExecutionPlanPanelTitle)?.GetControl() as QueryPlanUserControl;
+
+                if (control == null || addNewPanel)
+                {
+                    control = new QueryPlanUserControl()
+                    {
+                        DatabaseHelper = databaseHelper
+                    };
+
+                    if (queryable != null)
+                    {
+                        control.IndexCreated += (sender, args) =>
+                        {
+                            if (MessageBox.Show("Index created. Refresh query plan?", "", MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Question) == DialogResult.Yes)
+                            {
+                                DumpPlanInternal(queryable, false, false);
+                            }
+                        };
+                    }
+
+                    PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
+                }
+
+                ProcessQueryPlan(planXml, control);
             }
             catch (Exception exception)
             {
@@ -63,7 +95,7 @@ namespace ExecutionPlanVisualizer
             }
         }
 
-        private static void ProcessQueryPlan<T>(string planXml, DatabaseHelper databaseHelper, bool addNewPanel, IQueryable<T> queryable = null)
+        private static void ProcessQueryPlan(string planXml, QueryPlanUserControl control)
         {
             if (string.IsNullOrEmpty(planXml))
             {
@@ -81,29 +113,6 @@ namespace ExecutionPlanVisualizer
 
             var html = string.Format(Resources.template, files.ToArray());
 
-            var control = PanelManager.GetOutputPanel(ExecutionPlanPanelTitle)?.GetControl() as QueryPlanUserControl;
-
-            if (control == null || addNewPanel)
-            {
-                control = new QueryPlanUserControl()
-                {
-                    DatabaseHelper = databaseHelper
-                };
-
-                if (queryable != null)
-                {
-                    control.IndexCreated += (sender, args) =>
-                    {
-                        if (MessageBox.Show("Index created. Refresh query plan?", "", MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question) == DialogResult.Yes)
-                        {
-                            DumpPlanInternal(queryable, false, false);
-                        }
-                    };
-                }
-
-                PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
-            }
             control.DisplayExecutionPlanDetails(planXml, html, indexes);
         }
 
