@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
+using System.Xml;
 using ExecutionPlanVisualizer.Helpers;
 using ExecutionPlanVisualizer.Properties;
 using LINQPad;
@@ -23,7 +24,7 @@ namespace ExecutionPlanVisualizer
             return queryable;
         }
 
-        public static void DumpPlanXml(string planXml)
+        public static void DumpPlanXml(XmlDocument planXml)
         {
             try
             {
@@ -36,7 +37,7 @@ namespace ExecutionPlanVisualizer
 
                 PanelManager.DisplayControl(control, ExecutionPlanPanelTitle);
 
-                ProcessQueryPlan(planXml, control);
+                ProcessQueryPlan(planXml.OuterXml, control);
             }
             catch (Exception exception)
             {
