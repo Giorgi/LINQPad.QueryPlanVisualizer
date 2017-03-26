@@ -23,4 +23,4 @@ Query execution plan:
 ![query plan](screenshots/Query Plan.PNG "Query execution plan inside LINQPad")
 
 Missing index:
-![missing indexes](screenshots/Missing Index.PNG "Missing index")
+![missing indexes](screenshots/Missing%20Index.PNG "Missing index")
