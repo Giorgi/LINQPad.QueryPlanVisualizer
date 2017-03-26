@@ -20,7 +20,7 @@ To install the visualizer as a LINQPad plugin download the [latest release](http
 To view query plan or missing indexes call static `QueryPlanVisualizer.DumpPlan(query)` method or call `DumpPlan` extension method on any `IQueryable` instance. You will also need to add `ExecutionPlanVisualizer` to namespaces list (click F4 to open the dialog). If you want to dump query result too just pass `true` as a second parameter.
 
 Query execution plan:
-![query plan](screenshots/Query Plan.PNG "Query execution plan inside LINQPad")
+![query plan](screenshots/Query%20Plan.PNG "Query execution plan inside LINQPad")
 
 Missing index:
-![missing indexes](screenshots/Missing Index.PNG "Missing index")
+![missing indexes](screenshots/Missing%20Index.PNG "Missing index")
