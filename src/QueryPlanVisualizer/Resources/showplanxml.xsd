@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema targetNamespace="http://schemas.microsoft.com/sqlserver/2004/07/showplan" xmlns:shp="http://schemas.microsoft.com/sqlserver/2004/07/showplan" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.3" blockDefault="#all">
+<xsd:schema targetNamespace="http://schemas.microsoft.com/sqlserver/2004/07/showplan" xmlns:shp="http://schemas.microsoft.com/sqlserver/2004/07/showplan" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.5" blockDefault="#all">
   <xsd:annotation>
     <xsd:documentation>
       The following schema for Microsoft SQL Server describes output from the
@@ -29,7 +29,7 @@
     </xsd:documentation>
   </xsd:annotation>
   <xsd:annotation>
-    <xsd:documentation>Last updated: 07/08/13</xsd:documentation>
+    <xsd:documentation>Last updated: 06/28/2016</xsd:documentation>
   </xsd:annotation>
   <xsd:element name="ShowPlanXML">
     <xsd:complexType>
@@ -107,6 +107,7 @@
     <xsd:attribute name="StatementSqlHandle" type="xsd:string" use="optional" />
     <xsd:attribute name="DatabaseContextSettingsId" type="xsd:unsignedLong" use="optional" />
     <xsd:attribute name="ParentObjectId" type="xsd:unsignedLong" use="optional" />
+    <xsd:attribute name="BatchSqlHandle" type="xsd:string" use="optional" />
     <xsd:attribute name="StatementParameterizationType" type="xsd:int" use="optional" />
   </xsd:complexType>
   <xsd:complexType name="StmtSimpleType">
@@ -223,6 +224,13 @@
       <xsd:enumeration value="SnapShot" />
     </xsd:restriction>
   </xsd:simpleType>
+  <xsd:simpleType name="MemoryGrantWarningType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Excessive Grant" />
+      <xsd:enumeration value="Used More Than Granted" />
+      <xsd:enumeration value="Grant Increase" />
+    </xsd:restriction>
+  </xsd:simpleType>
   <xsd:complexType name="CursorPlanType">
     <xsd:sequence>
       <xsd:element name="Operation" minOccurs="0" maxOccurs="2">
@@ -307,6 +315,7 @@
     <xsd:attribute name="Alias" type="xsd:string" use="optional" />
     <xsd:attribute name="Column" type="xsd:string" use="required" />
     <xsd:attribute name="ComputedColumn" type="xsd:boolean" use="optional" />
+    <xsd:attribute name="ParameterDataType" type="xsd:string" use="optional" />
     <xsd:attribute name="ParameterCompiledValue" type="xsd:string" use="optional" />
     <xsd:attribute name="ParameterRuntimeValue" type="xsd:string" use="optional" />
   </xsd:complexType>
@@ -341,10 +350,16 @@
       <xsd:element name="SeekKeys" type="shp:SeekPredicateType" minOccurs="1" maxOccurs="2" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:complexType name="SeekPredicatePartType">
+    <xsd:choice>
+      <xsd:element name="SeekPredicateNew" type="shp:SeekPredicateNewType" minOccurs="1" maxOccurs="unbounded" />
+    </xsd:choice>
+  </xsd:complexType>
   <xsd:complexType name="SeekPredicatesType">
     <xsd:choice>
       <xsd:element name="SeekPredicate" type="shp:SeekPredicateType" minOccurs="1" maxOccurs="unbounded" />
       <xsd:element name="SeekPredicateNew" type="shp:SeekPredicateNewType" minOccurs="1" maxOccurs="unbounded" />
+      <xsd:element name="SeekPredicatePart" type="shp:SeekPredicatePartType" minOccurs="1" maxOccurs="unbounded" />
     </xsd:choice>
   </xsd:complexType>
   <xsd:complexType name="ObjectType">
@@ -405,6 +420,31 @@
       <!-- Additional information, like spill I/O stats may go here when available -->
     </xsd:sequence>
     <xsd:attribute name="SpillLevel" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="SpilledThreadCount" type ="xsd:unsignedLong" use="optional" />
+  </xsd:complexType>
+  <xsd:complexType name="SortSpillDetailsType">
+    <xsd:annotation>
+      <xsd:documentation>Sort spill details</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence> 
+      <!-- Additional information may go here when available -->
+    </xsd:sequence>
+     <xsd:attribute name="GrantedMemoryKb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="UsedMemoryKb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="WritesToTempDb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="ReadsFromTempDb" type ="xsd:unsignedLong" use="optional" />
+  </xsd:complexType>
+  <xsd:complexType name="HashSpillDetailsType">
+    <xsd:annotation>
+      <xsd:documentation>Hash spill details</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence> 
+      <!-- Additional information may go here when available -->
+    </xsd:sequence>
+     <xsd:attribute name="GrantedMemoryKb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="UsedMemoryKb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="WritesToTempDb" type ="xsd:unsignedLong" use="optional" />
+     <xsd:attribute name="ReadsFromTempDb" type ="xsd:unsignedLong" use="optional" />
   </xsd:complexType>
   <xsd:complexType name="WaitWarningType">
     <xsd:annotation>
@@ -422,6 +462,38 @@
       </xsd:simpleType>
     </xsd:attribute>
     <xsd:attribute name="WaitTime" type ="xsd:unsignedLong" use="optional" />
+  </xsd:complexType>
+  <xsd:complexType name="WaitStatType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Wait statistics during one query execution.
+          WaitType: Name of the wait
+          WaitTimeMs: Wait time in milliseconds
+          WaitCount: Number of waits
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="WaitType" type="xsd:string" use="required" />
+    <xsd:attribute name="WaitTimeMs" type="xsd:unsignedLong" use="required" />
+    <xsd:attribute name="WaitCount" type="xsd:unsignedLong" use="required" />
+  </xsd:complexType>
+  <xsd:complexType name="WaitStatListType">
+    <xsd:annotation>
+      <xsd:documentation> A list of query wait statistics. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="Wait" type="shp:WaitStatType" minOccurs="0" maxOccurs="unbounded" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="QueryExecTimeType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Shows time statistics for single query execution.
+        CpuTime: CPU time in milliseconds
+        ElapsedTime: elapsed time in milliseconds
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="CpuTime" type="xsd:unsignedLong" use="required" />
+    <xsd:attribute name="ElapsedTime" type="xsd:unsignedLong" use="required" />
   </xsd:complexType>
   <xsd:complexType name="AffectingConvertWarningType">
     <xsd:annotation>
@@ -450,6 +522,9 @@
       <xsd:element name="SpillToTempDb" type="shp:SpillToTempDbType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="Wait" type="shp:WaitWarningType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="PlanAffectingConvert" type="shp:AffectingConvertWarningType" minOccurs="0" maxOccurs="unbounded" />
+      <xsd:element name="SortSpillDetails" type="shp:SortSpillDetailsType" minOccurs="0" maxOccurs="unbounded" />
+      <xsd:element name="HashSpillDetails" type="shp:HashSpillDetailsType" minOccurs="0" maxOccurs="unbounded" />
+      <xsd:element name="MemoryGrantWarning" type="shp:MemoryGrantWarningInfo" minOccurs="0" maxOccurs="1" />
     </xsd:choice>
     <xsd:attribute name="NoJoinPredicate" type="xsd:boolean" use="optional" />
     <xsd:attribute name="SpatialGuess" type="xsd:boolean" use="optional" />
@@ -470,6 +545,14 @@
         Provide memory grant estimate as well as actual runtime memory grant information.
         Serial required/desired memory attributes are estimated during query compile time for serial execution.
         The rest of attributes provide estimates and counters for query execution time considering actual degree of parallelism.
+        SerialRequiredMemory: Required memory in KB if the query runs in serial mode. The query will not start without this memory.
+        SerialDesiredMemory: Memory estimated to fit intermediate results in KB if the query runs in serial mode.
+        RequiredMemory: Required memory in KB for the chosen degree of parallelism. If the query runs in serial mode, this is the same as SerialRequiredMemory.
+        DesiredMemory: Memory estimated to fit intermediate results in KB for the chosen degree of parallelism.  If the query runs in serial mode, this is the same as SerialDesiredMemory.
+        RequestedMemory: Memory in KB which the query requests the memory manager to grant. This can be smaller than sum of RequiredMemory and DesiredMemory if it exceeds the maximum allowed for single query.
+        GrantWaitTime: Time in seconds if the query has to wait for successful memory grant.
+        MaxUsedMemory: Maximum memory in KB used by the query.
+        MaxQueryMemory: Maximum memory in KB allowed for single query.
       </xsd:documentation>
     </xsd:annotation>
     <xsd:sequence />
@@ -483,6 +566,47 @@
     <xsd:attribute name="MaxUsedMemory" type="xsd:unsignedLong" use="optional" />
     <xsd:attribute name="MaxQueryMemory" type="xsd:unsignedLong" use="optional" />
   </xsd:complexType>
+  <xsd:complexType name="MemoryGrantWarningInfo">
+    <xsd:annotation>
+      <xsd:documentation>
+        Provide warning information for memory grant.
+        GrantWarningKind: Warning kind
+        RequestedMemory: Initial grant request in KB
+        GrantedMemory: Granted memory in KB
+        MaxUsedMemory: Maximum used memory grant in KB
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="GrantWarningKind" type="shp:MemoryGrantWarningType" use ="required" />
+    <xsd:attribute name="RequestedMemory" type="xsd:unsignedLong" use="required" />
+    <xsd:attribute name="GrantedMemory" type="xsd:unsignedLong" use="required" />
+    <xsd:attribute name="MaxUsedMemory" type="xsd:unsignedLong" use ="required" />
+  </xsd:complexType>
+  <xsd:simpleType name="TraceFlagScopeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Global"/>
+      <xsd:enumeration value="Session" />
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType name ="TraceFlagType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Describe a trace flag used in SQL engine.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="Value" type="xsd:unsignedLong" use="required" />
+    <xsd:attribute name="Scope" type="shp:TraceFlagScopeType" use="required" />
+  </xsd:complexType>
+  <xsd:complexType name="TraceFlagListType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Collection of trace flags used in SQL engine.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="TraceFlag" type="shp:TraceFlagType" minOccurs="1" maxOccurs="unbounded" />
+    </xsd:sequence>
+    <xsd:attribute name="IsCompileTime" type="xsd:boolean" use="required" />
+  </xsd:complexType>
   <xsd:complexType name="OptimizerHardwareDependentPropertiesType">
     <xsd:annotation>
       <xsd:documentation>
@@ -490,6 +614,7 @@
         EstimatedAvailableMemoryGrant is an estimate of what amount of memory (KB) will be available for this query at the execution time to request a memory grant from.
         EstimatedPagesCached is an estimate of how many pages of data will remain cached in the buffer pool if the query needs to read it again.
         EstimatedAvailableDegreeOfParallelism is an estimate of number of CPUs that can be used to execute the query should the Query Optimizer pick a parallel plan.
+        MaxCompileMemory is the maximum memory in KB allowed for query optimizer to use during compilation.
       </xsd:documentation>
     </xsd:annotation>
     <xsd:sequence />
@@ -536,6 +661,10 @@
           <xsd:attribute name="ActualLobReadAheads" type="xsd:unsignedLong" use="optional" />
           <xsd:attribute name="SegmentReads" type="xsd:int" use="optional" />
           <xsd:attribute name="SegmentSkips" type="xsd:int" use="optional" />
+          <xsd:attribute name="ActualLocallyAggregatedRows" type="xsd:unsignedLong" use="optional" />
+          <xsd:attribute name="InputMemoryGrant" type="xsd:unsignedLong" use="optional" />
+          <xsd:attribute name="OutputMemoryGrant" type="xsd:unsignedLong" use="optional" />
+          <xsd:attribute name="UsedMemoryGrant" type="xsd:unsignedLong" use="optional" />
         </xsd:complexType>
       </xsd:element>
     </xsd:sequence>
@@ -709,6 +838,9 @@
       <xsd:element name="Warnings" type="shp:WarningsType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="MemoryGrantInfo" type="shp:MemoryGrantType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="OptimizerHardwareDependentProperties" type="shp:OptimizerHardwareDependentPropertiesType" minOccurs="0" maxOccurs="1" />
+      <xsd:element name="TraceFlags" type="shp:TraceFlagListType" minOccurs="0" maxOccurs="2" />
+      <xsd:element name="WaitStats" type="shp:WaitStatListType" minOccurs="0" maxOccurs="1" />
+      <xsd:element name="QueryTimeStats" type="shp:QueryExecTimeType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="RelOp" type="shp:RelOpType" />
       <xsd:element name="ParameterList" type="shp:ColumnReferenceListType" minOccurs="0" maxOccurs="1" />
     </xsd:sequence>
@@ -757,6 +889,7 @@
         <xsd:element name="DeletedScan" type="shp:RowsetType" />
         <xsd:element name="Extension" type="shp:UDXType" />
         <xsd:element name="Filter" type="shp:FilterType" />
+        <xsd:element name="ForeignKeyReferencesCheck" type="shp:ForeignKeyReferencesCheckType" />
         <xsd:element name="Generic" type="shp:GenericType" />
         <xsd:element name="Hash" type="shp:HashType" />
         <xsd:element name="IndexScan" type="shp:IndexScanType" />
@@ -769,6 +902,7 @@
         <xsd:element name="Parallelism" type="shp:ParallelismType" />
         <xsd:element name="ParameterTableScan" type="shp:RelOpBaseType" />
         <xsd:element name="PrintDataflow" type="shp:RelOpBaseType" />
+        <xsd:element name="Put" type="shp:PutType" />
         <xsd:element name="RemoteFetch" type="shp:RemoteFetchType" />
         <xsd:element name="RemoteModify" type="shp:RemoteModifyType" />
         <xsd:element name="RemoteQuery" type="shp:RemoteQueryType" />
@@ -791,6 +925,7 @@
         <xsd:element name="TopSort" type="shp:TopSortType" />
         <xsd:element name="Update" type="shp:UpdateType" />
         <xsd:element name="WindowSpool" type="shp:WindowType" />
+        <xsd:element name="WindowAggregate" type="shp:WindowAggregateType" />
       </xsd:choice>
     </xsd:sequence>
     <xsd:attribute name="AvgRowSize" type="xsd:double" use="required" />
@@ -801,6 +936,7 @@
     <xsd:attribute name="EstimatedExecutionMode" type="shp:ExecutionModeType" use="optional" />
     <xsd:attribute name="GroupExecuted" type="xsd:boolean" use="optional" />
     <xsd:attribute name="EstimateRows" type="xsd:double" use="required" />
+    <xsd:attribute name="EstimatedRowsRead" type="xsd:double" use="optional" />
     <xsd:attribute name="LogicalOp" type="shp:LogicalOpType" use="required" />
     <xsd:attribute name="NodeId" type="xsd:int" use="required" />
     <xsd:attribute name="Parallel" type="xsd:boolean" use="required" />
@@ -815,6 +951,24 @@
     <xsd:sequence>
       <xsd:element name="DefinedValues" type="shp:DefinedValuesListType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="InternalInfo" type="shp:InternalInfoType" minOccurs="0" maxOccurs="1" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ForeignKeyReferencesCheckType">
+    <xsd:complexContent>
+      <xsd:extension base="shp:RelOpBaseType">
+        <xsd:sequence>
+          <xsd:element name="RelOp" type="shp:RelOpType" minOccurs="1" maxOccurs="1" />
+          <xsd:element name="ForeignKeyReferenceCheck" type="shp:ForeignKeyReferenceCheckType" minOccurs="1" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="ForeignKeyReferencesCount" type="xsd:int" use="optional" />
+        <xsd:attribute name="NoMatchingIndexCount" type="xsd:int" use="optional" />
+        <xsd:attribute name="PartialMatchingIndexCount" type="xsd:int" use="optional" />
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ForeignKeyReferenceCheckType">
+    <xsd:sequence>
+      <xsd:element name="IndexScan" type="shp:IndexScanType" minOccurs="1" maxOccurs="1" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="SimpleIteratorOneChildType">
@@ -885,7 +1039,7 @@
       <xsd:extension base="shp:RowsetType">
         <xsd:sequence>
           <xsd:element name="SeekPredicates" type="shp:SeekPredicatesType" minOccurs="0" maxOccurs="1" />
-          <xsd:element name="Predicate" type="shp:ScalarExpressionType" minOccurs="0" maxOccurs="1" />
+          <xsd:element name="Predicate" type="shp:ScalarExpressionType" minOccurs="0" maxOccurs="unbounded" />
           <xsd:element name="PartitionId" type="shp:SingleColumnReferenceType" minOccurs="0" maxOccurs="1" />
           <xsd:element name="IndexedViewInfo" type="shp:IndexedViewInfoType" minOccurs="0" maxOccurs="1" />
         </xsd:sequence>
@@ -898,6 +1052,7 @@
         <xsd:attribute name="ForceScan" type="xsd:boolean" use="optional" />
         <xsd:attribute name="NoExpandHint" type="xsd:boolean" use="optional" />
         <xsd:attribute name="Storage" type="shp:StorageType" use="optional" />
+        <xsd:attribute name="DynamicSeek" type="xsd:boolean" use="optional"/>
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
@@ -1127,7 +1282,7 @@
       <xsd:extension base="shp:RelOpBaseType">
         <xsd:sequence>
           <xsd:element name="UsedUDXColumns" type="shp:ColumnReferenceListType" minOccurs="0" maxOccurs="1" />
-          <xsd:element name="RelOp" type="shp:RelOpType" />
+          <xsd:element name="RelOp" type="shp:RelOpType" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="UDXName" type="xsd:string" use="required" />
       </xsd:extension>
@@ -1136,6 +1291,24 @@
   <xsd:complexType name="WindowType">
     <xsd:complexContent>
       <xsd:extension base="shp:RelOpBaseType">
+        <xsd:sequence>
+          <xsd:element name="RelOp" type="shp:RelOpType" minOccurs="0" maxOccurs="1" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="WindowAggregateType">
+    <xsd:complexContent>
+      <xsd:extension base="shp:RelOpBaseType">
+        <xsd:sequence>
+          <xsd:element name="RelOp" type="shp:RelOpType" minOccurs="0" maxOccurs="1" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="PutType">
+    <xsd:complexContent>
+      <xsd:extension base="shp:RemoteQueryType">
         <xsd:sequence>
           <xsd:element name="RelOp" type="shp:RelOpType" minOccurs="0" maxOccurs="1" />
         </xsd:sequence>
@@ -1233,6 +1406,7 @@
   <xsd:complexType name="RemoteType">
     <xsd:complexContent>
       <xsd:extension base="shp:RelOpBaseType">
+        <xsd:attribute name="RemoteDestination" type="xsd:string" use="optional" />
         <xsd:attribute name="RemoteSource" type="xsd:string" use="optional" />
         <xsd:attribute name="RemoteObject" type="xsd:string" use="optional" />
       </xsd:extension>
@@ -1394,7 +1568,7 @@
   </xsd:complexType>
   <xsd:complexType name="MultAssignType">
     <xsd:sequence>
-      <xsd:element name="Assign" type="shp:AssignType" minOccurs="1" maxOccurs="unbounded" />
+      <xsd:element name="Assign" type="shp:AssignType" minOccurs="0" maxOccurs="unbounded" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ConditionalType">
@@ -1551,6 +1725,7 @@
     </xsd:annotation>
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="Aggregate" />
+      <xsd:enumeration value="Anti Diff" />
       <xsd:enumeration value="Assert" />
       <xsd:enumeration value="Async Concat" />
       <xsd:enumeration value="Batch Hash Table Build" />
@@ -1571,6 +1746,7 @@
       <xsd:enumeration value="Eager Spool" />
       <xsd:enumeration value="Filter" />
       <xsd:enumeration value="Flow Distinct" />
+      <xsd:enumeration value="Foreign Key References Check" />
       <xsd:enumeration value="Full Outer Join" />
       <xsd:enumeration value="Gather Streams" />
       <xsd:enumeration value="Generic" />
@@ -1579,8 +1755,12 @@
       <xsd:enumeration value="Inner Join" />
       <xsd:enumeration value="Insert" />
       <xsd:enumeration value="Inserted Scan" />
+      <xsd:enumeration value="Intersect" />
+      <xsd:enumeration value="Intersect All" />
       <xsd:enumeration value="Lazy Spool" />
       <xsd:enumeration value="Left Anti Semi Join" />
+      <xsd:enumeration value="Left Diff" />
+      <xsd:enumeration value="Left Diff All" />
       <xsd:enumeration value="Left Outer Join" />
       <xsd:enumeration value="Left Semi Join" />
       <xsd:enumeration value="Log Row Scan" />
@@ -1588,6 +1768,8 @@
       <xsd:enumeration value="Parameter Table Scan" />
       <xsd:enumeration value="Partial Aggregate" />
       <xsd:enumeration value="Print" />
+      <xsd:enumeration value="Put" />
+      <xsd:enumeration value="Rank" />
       <xsd:enumeration value="Remote Delete" />
       <xsd:enumeration value="Remote Index Scan" />
       <xsd:enumeration value="Remote Index Seek" />
@@ -1598,6 +1780,8 @@
       <xsd:enumeration value="Repartition Streams" />
       <xsd:enumeration value="RID Lookup" />
       <xsd:enumeration value="Right Anti Semi Join" />
+      <xsd:enumeration value="Right Diff" />
+      <xsd:enumeration value="Right Diff All" />
       <xsd:enumeration value="Right Outer Join" />
       <xsd:enumeration value="Right Semi Join" />
       <xsd:enumeration value="Segment" />
@@ -1616,6 +1800,8 @@
       <xsd:enumeration value="Merge Stats" />
       <xsd:enumeration value="Local Stats" />
       <xsd:enumeration value="Window Spool" />
+      <xsd:enumeration value="Window Aggregate" />
+      <xsd:enumeration value="Key Lookup" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:simpleType name="PhysicalOpType">
@@ -1656,11 +1842,17 @@
       <xsd:enumeration value="Clustered Index Merge" />
       <xsd:enumeration value="Clustered Update" />
       <xsd:enumeration value="Collapse" />
+      <xsd:enumeration value="Columnstore Index Delete" />
+      <xsd:enumeration value="Columnstore Index Insert" />
+      <xsd:enumeration value="Columnstore Index Merge" />
+      <xsd:enumeration value="Columnstore Index Scan" />
+      <xsd:enumeration value="Columnstore Index Update" />
       <xsd:enumeration value="Compute Scalar" />
       <xsd:enumeration value="Concatenation" />
       <xsd:enumeration value="Constant Scan" />
       <xsd:enumeration value="Deleted Scan" />
       <xsd:enumeration value="Filter" />
+      <xsd:enumeration value="Foreign Key References Check" />
       <xsd:enumeration value="Generic" />
       <xsd:enumeration value="Hash Match" />
       <xsd:enumeration value="Index Delete" />
@@ -1678,6 +1870,8 @@
       <xsd:enumeration value="Parallelism" />
       <xsd:enumeration value="Parameter Table Scan" />
       <xsd:enumeration value="Print" />
+      <xsd:enumeration value="Put" />
+      <xsd:enumeration value="Rank" />
       <xsd:enumeration value="Remote Delete" />
       <xsd:enumeration value="Remote Index Scan" />
       <xsd:enumeration value="Remote Index Seek" />
@@ -1704,6 +1898,8 @@
       <xsd:enumeration value="Top" />
       <xsd:enumeration value="UDX" />
       <xsd:enumeration value="Window Spool" />
+      <xsd:enumeration value="Window Aggregate" />
+      <xsd:enumeration value="Key Lookup" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:complexType name="SetOptionsType">
