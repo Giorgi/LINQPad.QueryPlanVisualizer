@@ -5,6 +5,14 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPlanVisualizer", "QueryPlanVisualizer\QueryPlanVisualizer.csproj", "{DF42BBC7-9733-4FD3-9758-13A1F657CFBB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPlanVisualizerEF5Support", "QueryPlanVisualizerEF5Support\QueryPlanVisualizerEF5Support.csproj", "{483F8FF9-0E23-4613-84E0-3CDBDCD35DF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPlanVisualizerDatabaseHelper", "QueryPlanVisualizerDatabaseHelpers\QueryPlanVisualizerDatabaseHelper.csproj", "{C164A674-3DCB-4E95-9692-E5E40A18599B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPlanVisualizerEF6Support", "QueryPlanVisualizerEF6Support\QueryPlanVisualizerEF6Support.csproj", "{C89FDBA0-83BD-4502-8006-C5F61EF72FD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryPlanVisualizerLinqToSqlSupport", "QueryPlanVisualizerLinqToSqlSupport\QueryPlanVisualizerLinqToSqlSupport.csproj", "{47AF8E15-5A04-4E1F-BEF9-FF25B2758D57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +23,22 @@ Global
 		{DF42BBC7-9733-4FD3-9758-13A1F657CFBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF42BBC7-9733-4FD3-9758-13A1F657CFBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF42BBC7-9733-4FD3-9758-13A1F657CFBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{483F8FF9-0E23-4613-84E0-3CDBDCD35DF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{483F8FF9-0E23-4613-84E0-3CDBDCD35DF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{483F8FF9-0E23-4613-84E0-3CDBDCD35DF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{483F8FF9-0E23-4613-84E0-3CDBDCD35DF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C164A674-3DCB-4E95-9692-E5E40A18599B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C164A674-3DCB-4E95-9692-E5E40A18599B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C164A674-3DCB-4E95-9692-E5E40A18599B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C164A674-3DCB-4E95-9692-E5E40A18599B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C89FDBA0-83BD-4502-8006-C5F61EF72FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C89FDBA0-83BD-4502-8006-C5F61EF72FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C89FDBA0-83BD-4502-8006-C5F61EF72FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C89FDBA0-83BD-4502-8006-C5F61EF72FD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47AF8E15-5A04-4E1F-BEF9-FF25B2758D57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47AF8E15-5A04-4E1F-BEF9-FF25B2758D57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47AF8E15-5A04-4E1F-BEF9-FF25B2758D57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47AF8E15-5A04-4E1F-BEF9-FF25B2758D57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

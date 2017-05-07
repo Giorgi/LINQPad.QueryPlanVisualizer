@@ -47,7 +47,7 @@ namespace ExecutionPlanVisualizer
                 return;
             }
 
-            var databaseHelper = DatabaseHelper.Create(Util.CurrentDataContext, queryable);
+            var databaseHelper = DatabaseHelperFactory.Create(Util.CurrentDataContext, queryable);
 
             if (dumpData)
             {
